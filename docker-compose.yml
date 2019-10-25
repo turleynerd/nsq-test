@@ -1,0 +1,52 @@
+version: "3.2"
+services:
+  nsqd:
+    image: nsqio/nsq
+    command: |
+      /nsqd
+      --lookupd-tcp-address=nsqlookupd:4160
+      # --tls-root-ca-file=/etc/ssl/certs/root.crt
+      --tls-cert=/etc/ssl/certs/make-production.internal.crt
+      --tls-key=/etc/ssl/certs/make-production.internal.key
+      --tls-required=true
+    depends_on:
+      - nsqlookupd
+    ports:
+      - 4150
+      - 4151
+    links:
+      - nsqlookupd
+    volumes:
+      - ./certs:/etc/ssl/certs
+  nsqlookupd:
+    image: nsqio/nsq
+    command: /nsqlookupd
+    ports:
+      - 4160
+      - 4161
+  nsqadmin:
+    image: nsqio/nsq
+    command: |
+      /nsqadmin
+      --lookupd-http-address=nsqlookupd:4161
+      --http-client-tls-insecure-skip-verify=true
+    depends_on:
+      - nsqlookupd
+    ports:
+      - 4171:4171
+    links:
+      - nsqlookupd
+
+  consumer:
+    build:
+      context: .
+    command: consumer
+    links:
+      - nsqd
+      - nsqlookupd
+  producer:
+    build:
+      context: .
+    command: producer
+    links:
+      - nsqd
