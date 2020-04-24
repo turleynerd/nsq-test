@@ -5,10 +5,11 @@ services:
     command: |
       /nsqd
       --lookupd-tcp-address=nsqlookupd:4160
-      # --tls-root-ca-file=/etc/ssl/certs/root.crt
-      --tls-cert=/etc/ssl/certs/make-production.internal.crt
-      --tls-key=/etc/ssl/certs/make-production.internal.key
+      --tls-root-ca-file=/etc/ssl/certs/root.crt
+      --tls-cert=/etc/ssl/certs/dev.internal.crt
+      --tls-key=/etc/ssl/certs/dev.internal.key
       --tls-required=true
+      --data-path=/tmp/nsq
     depends_on:
       - nsqlookupd
     ports:
@@ -18,6 +19,7 @@ services:
       - nsqlookupd
     volumes:
       - ./certs:/etc/ssl/certs
+      - ./data:/tmp/nsq
   nsqlookupd:
     image: nsqio/nsq
     command: /nsqlookupd
