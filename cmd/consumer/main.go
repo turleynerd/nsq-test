@@ -3,12 +3,21 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
+	"time"
 
 	nsq "github.com/nsqio/go-nsq"
 )
+
+type counter struct {
+	counter    int
+	counterTwo int
+	lock       sync.Mutex
+}
 
 func main() {
 	nsqConfig := nsq.NewConfig()
@@ -18,6 +27,11 @@ func main() {
 		InsecureSkipVerify: true,
 	}
 
+	ticker := time.NewTicker(10 * time.Second)
+	done := make(chan bool)
+
+	msgConsumed := counter{}
+
 	// Create a new consumer on the events topic
 	nsqConsumer, err := nsq.NewConsumer("events", "events-consumer", nsqConfig)
 	if err != nil {
@@ -26,10 +40,26 @@ func main() {
 
 	// Tell it which handler to run when a message comes in
 	nsqConsumer.AddConcurrentHandlers(nsq.HandlerFunc(func(msg *nsq.Message) error {
-		fmt.Println(string(msg.Body))
+		msgConsumed.lock.Lock()
+		defer msgConsumed.lock.Unlock()
+		fmt.Printf("Message: %+v \n", msg)
+		msgConsumed.counterTwo++
 		msg.Finish()
+		msgConsumed.counter++
 		return nil
 	}), 50)
+
+	// Print out our current count
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case t := <-ticker.C:
+				log.Println(fmt.Sprintf("Consumed Messages: %v Finished Messages: %v at %v", msgConsumed.counterTwo, msgConsumed.counter, t))
+			}
+		}
+	}()
 
 	// Connect to nsqlookupd
 	err = nsqConsumer.ConnectToNSQLookupd("nsqlookupd:4161")
@@ -49,6 +79,7 @@ func main() {
 			return
 		case <-shutdown:
 			nsqConsumer.Stop()
+			ticker.Stop()
 		}
 	}
 }
