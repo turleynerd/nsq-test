@@ -24,7 +24,7 @@ func main() {
 		panic(err)
 	}
 
-	// Publish a new message every second
+	// Publish a new message every Millisecond
 	for x := 1; x < 1001; x++ {
 		err := nsqProducer.Publish("events", []byte(`hello, world`))
 		if err != nil {

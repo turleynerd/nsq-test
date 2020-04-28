@@ -1,6 +1,6 @@
 FROM golang:1.12
 
-COPY . /go/src/github.com/RedVentures/nsq-tls
+COPY . /go/src/github.com/turleynerd/nsq-test
 
-RUN go install github.com/RedVentures/nsq-tls/cmd/consumer
-RUN go install github.com/RedVentures/nsq-tls/cmd/producer
+RUN go install github.com/turleynerd/nsq-test/cmd/consumer
+RUN go install github.com/turleynerd/nsq-test/cmd/producer
