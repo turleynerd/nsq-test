@@ -69,7 +69,7 @@ func main() {
 
 	// We listen for stopping signals, and attempt to shut down gracefully.
 	shutdown := make(chan os.Signal, 2)
-	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGKILL)
+	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
 	// We listen for a couple of messages in order to exit. If receive an interrupt or kill signal, we stop the
 	// metrics server, and start to drain NSQ. Once NSQ is drained, we return from the main func.
@@ -78,6 +78,7 @@ func main() {
 		case <-nsqConsumer.StopChan:
 			return
 		case <-shutdown:
+			log.Println("SIGKILL REC: Shutting down.")
 			nsqConsumer.Stop()
 			ticker.Stop()
 		}
