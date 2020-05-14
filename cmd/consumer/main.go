@@ -42,7 +42,7 @@ func main() {
 	nsqConsumer.AddConcurrentHandlers(nsq.HandlerFunc(func(msg *nsq.Message) error {
 		msgConsumed.lock.Lock()
 		defer msgConsumed.lock.Unlock()
-		fmt.Printf("Message: %+v \n", msg)
+		// fmt.Printf("Message: %+v \n", msg)
 		msgConsumed.counterTwo++
 		msg.Finish()
 		msgConsumed.counter++
@@ -76,11 +76,15 @@ func main() {
 	for {
 		select {
 		case <-nsqConsumer.StopChan:
+			log.Println(fmt.Sprintf("3: Consumed Messages: %v Finished Messages: %v", msgConsumed.counterTwo, msgConsumed.counter))
 			return
 		case <-shutdown:
 			log.Println("SIGKILL REC: Shutting down.")
+			log.Println(fmt.Sprintf("1: Consumed Messages: %v Finished Messages: %v", msgConsumed.counterTwo, msgConsumed.counter))
 			nsqConsumer.Stop()
 			ticker.Stop()
+			log.Println(fmt.Sprintf("2: Consumed Messages: %v Finished Messages: %v", msgConsumed.counterTwo, msgConsumed.counter))
+
 		}
 	}
 }

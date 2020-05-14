@@ -1,7 +1,7 @@
 version: "3.2"
 services:
   nsqd:
-    image: nsqio/nsq
+    image: cturley/nsqd
     command: |
       /nsqd
       --lookupd-tcp-address=nsqlookupd:4160
@@ -13,8 +13,9 @@ services:
     depends_on:
       - nsqlookupd
     ports:
-      - 4150
-      - 4151
+      - 4150:4150
+      - 4151:4151
+      - 4152:4152
     links:
       - nsqlookupd
     volumes:

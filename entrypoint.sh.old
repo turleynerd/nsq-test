@@ -1,0 +1,27 @@
+#!/bin/sh
+# Lets handle the shutdown gracefully provide time to shutdown other services.
+function shutdown() {
+    q=$(curl -k https://127.0.0.1:4152/stats\?format\=json 2>/dev/null | jq -r '.topics[].channels[].depth' | awk '{s+=$1} END {print s}')
+    timeout=$(($q / 500))
+    if (( $timeout < 1 )); then
+        timeout=1
+    elif (( $timeout > 30 )); then
+        timeout=2
+        echo "Warning!! - message count exceeded max timeout"
+    fi
+    echo "Shutdown request recieved, delaying shutdown for $timeout seconds."
+    # TODO: improve sleep time to be based on number of messages in depth
+    sleep $timeout
+    echo "Sending SIGTERM and waiting for it to close."
+    # Get stats just before shutdown to count messages we may lose
+    curl -k https://127.0.0.1:4152/stats?format=json 2>/dev/null
+    kill $pid
+    wait $pid
+    exit
+}
+trap shutdown SIGTERM SIGINT
+
+# Run command and wait for exit 
+exec "$@" &
+pid="$pid $!"
+wait $pid
